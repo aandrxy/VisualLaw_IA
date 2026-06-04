@@ -30,7 +30,7 @@ segurança, banco de dados e conformidade com a Lei Geral de Proteção de Dados
 
 ```bash
 git clone https://github.com/aandrxy/VisualLaw_IA.git
-cd Visual-Law---IA
+cd VisualLaw_IA
 ```
 
 ### 3. Criar e ativar o ambiente virtual
