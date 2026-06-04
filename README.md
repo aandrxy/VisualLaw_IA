@@ -29,7 +29,7 @@ segurança, banco de dados e conformidade com a Lei Geral de Proteção de Dados
 ### 2. Clonar o repositório
 
 ```bash
-git clone https://github.com/aandrxy/Visual-Law---IA.git
+git clone https://github.com/aandrxy/VisualLaw_IA.git
 cd Visual-Law---IA
 ```
 
