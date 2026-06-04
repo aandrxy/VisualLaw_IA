@@ -1,0 +1,23 @@
+# ============================================================
+# SQUAD 2 — Backend e Segurança | Visual Law Project
+# requirements.txt
+# ============================================================
+
+# ── API Web ──────────────────────────────────────────────────
+flask==3.0.3
+flask-cors==4.0.0
+gunicorn==22.0.0          # Servidor WSGI para produção
+
+# ── Criptografia ─────────────────────────────────────────────
+cryptography==42.0.8       # Fernet (AES-128 + HMAC-SHA256)
+
+# ── Banco de Dados ───────────────────────────────────────────
+pymongo==4.7.3             # MongoDB (produção)
+mongomock==4.1.2           # MongoDB mock (desenvolvimento/testes)
+# psycopg2-binary==2.9.9  # Descomentar para PostgreSQL em produção
+
+# ── Extração de PDF (compartilhado com Squad 3) ───────────────
+PyMuPDF==1.24.5            # fitz — extração de texto de PDFs
+
+# ── Utilitários ──────────────────────────────────────────────
+python-dotenv==1.0.1       # Variáveis de ambiente (.env)

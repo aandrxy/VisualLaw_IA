@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Law — Squad 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:    #0A0E1A;
+  --paper:  #F5F0E8;
+  --cream:  #EDE8DC;
+  --teal:   #1A7A6E;
+  --teal2:  #0F5A50;
+  --gold:   #C8861A;
+  --red:    #C03030;
+  --muted:  #8A8070;
+  --border: #D4CCBC;
+  --white:  #FFFFFF;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── NOISE texture overlay ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4;
+}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:#080C16;
+  border-right:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;
+  padding:0;position:sticky;top:0;height:100vh;overflow:hidden;
+}
+
+.logo-area{
+  padding:2rem 1.75rem 1.5rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.logo-eyebrow{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:.2em;color:var(--teal);text-transform:uppercase;
+  margin-bottom:.5rem;
+}
+.logo-title{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:900;
+  color:var(--paper);line-height:1.15;
+}
+.logo-title span{color:var(--teal)}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:.4rem}
+
+.status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:20px;
+  background:rgba(26,122,110,.12);border:1px solid rgba(26,122,110,.3);
+  font-size:10px;color:var(--teal);font-family:'DM Mono',monospace;
+  margin-top:.75rem;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#555;transition:background .3s}
+.status-dot.on{background:var(--teal);box-shadow:0 0 6px var(--teal)}
+
+/* nav */
+.nav{flex:1;overflow-y:auto;padding:1.25rem 0}
+.nav-section{margin-bottom:1.5rem}
+.nav-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.2em;
+  color:rgba(255,255,255,.2);text-transform:uppercase;
+  padding:0 1.75rem;margin-bottom:.5rem;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 1.75rem;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all .2s;color:rgba(255,255,255,.45);
+  font-size:13.5px;font-weight:500;
+}
+.nav-item:hover{color:var(--paper);background:rgba(255,255,255,.04)}
+.nav-item.active{
+  color:var(--paper);background:rgba(26,122,110,.1);
+  border-left-color:var(--teal);
+}
+.nav-icon{width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+  background:rgba(255,255,255,.05);
+}
+.nav-item.active .nav-icon{background:rgba(26,122,110,.2)}
+
+.sidebar-footer{
+  padding:1.25rem 1.75rem;
+  border-top:1px solid rgba(255,255,255,.06);
+  font-size:11px;color:rgba(255,255,255,.2);
+  font-family:'DM Mono',monospace;
+}
+
+/* ── MAIN ── */
+.main{display:flex;flex-direction:column;min-height:100vh}
+
+/* page header */
+.page-header{
+  padding:2rem 2.5rem 1.5rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:flex-end;justify-content:space-between;
+}
+.page-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--paper)}
+.page-sub{font-size:12px;color:var(--muted);margin-top:.25rem}
+
+/* content */
+.content{flex:1;padding:2rem 2.5rem;display:flex;flex-direction:column;gap:1.5rem}
+
+/* ── CARDS ── */
+.card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;overflow:hidden;
+}
+.card-header{
+  padding:1rem 1.5rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.1em;
+  color:var(--muted);text-transform:uppercase}
+.card-body{padding:1.5rem}
+
+/* ── FORM ELEMENTS ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.field{display:flex;flex-direction:column;gap:.45rem}
+.field label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.05em}
+.field input,.field select,.field textarea{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:10px 14px;
+  color:var(--paper);font-family:'DM Sans',sans-serif;font-size:14px;
+  outline:none;transition:border-color .2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal)}
+.field select option{background:#0A0E1A}
+.field textarea{resize:vertical;min-height:80px}
+
+/* ── BUTTON ── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:8px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;
+  transition:all .2s;
+}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal2);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{
+  background:rgba(255,255,255,.06);color:var(--paper);
+  border:1px solid rgba(255,255,255,.1);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+
+/* ── ALERT BOX ── */
+.alert{
+  padding:12px 16px;border-radius:8px;font-size:13px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.alert-info{background:rgba(26,122,110,.12);border:1px solid rgba(26,122,110,.25);color:#7ECFC6}
+.alert-warn{background:rgba(200,134,26,.1);border:1px solid rgba(200,134,26,.25);color:#D4A030}
+.alert-err {background:rgba(192,48,48,.1); border:1px solid rgba(192,48,48,.25); color:#E07070}
+.alert-ok  {background:rgba(26,122,110,.15);border:1px solid rgba(26,122,110,.35);color:#7ECFC6}
+
+/* ── TOKEN BADGE ── */
+.token-display{
+  background:rgba(26,122,110,.1);border:1px solid rgba(26,122,110,.25);
+  border-radius:8px;padding:10px 14px;
+  font-family:'DM Mono',monospace;font-size:11px;color:#7ECFC6;
+  word-break:break-all;cursor:pointer;transition:border-color .2s;
+  min-height:40px;
+}
+.token-display:hover{border-color:var(--teal)}
+.token-empty{color:rgba(255,255,255,.2);font-style:italic}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+  border:2px dashed rgba(255,255,255,.12);border-radius:12px;
+  padding:2.5rem;text-align:center;cursor:pointer;
+  transition:all .25s;background:rgba(255,255,255,.02);
+}
+.upload-zone:hover,.upload-zone.drag{
+  border-color:var(--teal);background:rgba(26,122,110,.06);
+}
+.upload-icon{font-size:36px;margin-bottom:.75rem;opacity:.5}
+.upload-title{font-size:14px;color:var(--paper);font-weight:500}
+.upload-sub{font-size:12px;color:var(--muted);margin-top:.35rem}
+.upload-file{font-family:'DM Mono',monospace;font-size:11px;color:var(--teal);margin-top:.5rem}
+#file-in{display:none}
+
+/* ── PIPELINE VISUAL ── */
+.pipeline{display:flex;align-items:center;gap:0;margin:1rem 0}
+.pipe-step{
+  flex:1;text-align:center;padding:1rem .5rem;
+  border-radius:10px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  transition:all .4s;position:relative;
+}
+.pipe-step.active{background:rgba(26,122,110,.15);border-color:rgba(26,122,110,.4)}
+.pipe-step.done{background:rgba(26,122,110,.08);border-color:rgba(26,122,110,.2)}
+.pipe-step .step-icon{font-size:22px;margin-bottom:.4rem}
+.pipe-step .step-name{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.pipe-step.active .step-name{color:var(--teal)}
+.pipe-arrow{color:rgba(255,255,255,.15);font-size:16px;padding:0 4px;flex-shrink:0}
+
+/* ── RESPONSE ── */
+.response-box{
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:1.25rem;
+  font-family:'DM Mono',monospace;font-size:12px;line-height:1.8;
+  min-height:80px;max-height:320px;overflow-y:auto;
+  white-space:pre-wrap;word-break:break-word;
+}
+.json-key{color:#7EB8FF}
+.json-str{color:#A8E6A3}
+.json-num{color:#FFD97D}
+.json-bool{color:#FF9F7D}
+.json-null{color:#888}
+
+.resp-status{
+  display:inline-block;padding:3px 10px;border-radius:5px;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:600;margin-bottom:.75rem;
+}
+.s-ok {background:rgba(26,122,110,.2);color:#7ECFC6}
+.s-err{background:rgba(192,48,48,.2); color:#E07070}
+
+/* ── LOADING SPINNER ── */
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(255,255,255,.1);
+  border-top-color:var(--teal);border-radius:50%;
+  animation:spin .7s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOG TABLE ── */
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{
+  text-align:left;padding:8px 12px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;
+  color:var(--muted);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.log-table td{
+  padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);
+  color:rgba(255,255,255,.7);
+}
+.log-table tr:hover td{background:rgba(255,255,255,.02)}
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;
+  font-family:'DM Mono',monospace;font-weight:600;
+}
+.b-ok {background:rgba(26,122,110,.2);color:#7ECFC6}
+.b-err{background:rgba(192,48,48,.2); color:#E07070}
+.b-inf{background:rgba(200,134,26,.15);color:#D4A030}
+
+/* ── ANON DEMO ── */
+.anon-demo{display:grid;grid-template-columns:1fr 40px 1fr;gap:.75rem;align-items:center}
+.anon-before,.anon-after{
+  background:rgba(0,0,0,.25);border-radius:8px;padding:1rem;
+  font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.9;
+}
+.anon-before{border:1px solid rgba(192,48,48,.2)}
+.anon-after {border:1px solid rgba(26,122,110,.2)}
+.anon-label{font-size:9px;letter-spacing:.15em;font-family:'DM Mono',monospace;
+  text-transform:uppercase;margin-bottom:.5rem}
+.anon-before .anon-label{color:rgba(192,48,48,.7)}
+.anon-after  .anon-label{color:var(--teal)}
+.highlight-red  {color:#E07070;font-weight:600}
+.highlight-teal {color:#7ECFC6;font-weight:600}
+.arrow-mid{text-align:center;color:var(--teal);font-size:22px}
+
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.stat{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:1.25rem 1rem;text-align:center;
+}
+.stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;
+  color:var(--teal);line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:.4rem;font-family:'DM Mono',monospace}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.07)}
+.tab{
+  padding:10px 1.5rem;font-size:13px;cursor:pointer;
+  border-bottom:2px solid transparent;color:var(--muted);transition:all .2s;
+}
+.tab.active{color:var(--paper);border-bottom-color:var(--teal)}
+
+/* ── PAGE SECTIONS ── */
+.section{display:none}
+.section.active{display:flex;flex-direction:column;gap:1.5rem}
+
+/* ── WELCOME ── */
+.welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.feature-card{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:1.5rem;
+}
+.feature-icon{font-size:28px;margin-bottom:.75rem}
+.feature-title{font-size:14px;font-weight:600;color:var(--paper);margin-bottom:.4rem}
+.feature-desc{font-size:12.5px;color:var(--muted);line-height:1.6}
+.hero{
+  background:linear-gradient(135deg,rgba(26,122,110,.15) 0%,rgba(10,14,26,0) 60%);
+  border:1px solid rgba(26,122,110,.2);border-radius:14px;
+  padding:2rem;position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'⚖';position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);
+  font-size:80px;opacity:.06;
+}
+.hero-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;
+  color:var(--teal);text-transform:uppercase;margin-bottom:.75rem}
+.hero-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;
+  color:var(--paper);line-height:1.2;margin-bottom:.75rem}
+.hero-desc{font-size:13px;color:var(--muted);line-height:1.7;max-width:480px}
+
+/* ── OPT OUT TOGGLE ── */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:1rem 1.25rem;}
+.toggle-info{flex:1}
+.toggle-title{font-size:14px;font-weight:500;color:var(--paper)}
+.toggle-desc{font-size:12px;color:var(--muted);margin-top:.2rem}
+.toggle{
+  position:relative;width:48px;height:26px;cursor:pointer;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:rgba(255,255,255,.1);
+  border-radius:26px;transition:.3s;border:1px solid rgba(255,255,255,.15);
+}
+.toggle-slider::before{
+  content:'';position:absolute;height:18px;width:18px;
+  left:3px;bottom:3px;background:rgba(255,255,255,.5);
+  border-radius:50%;transition:.3s;
+}
+.toggle input:checked+.toggle-slider{background:var(--teal);border-color:var(--teal)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(22px);background:#fff}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+
+/* animate in */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.section.active > *{animation:fadeUp .35s ease both}
+.section.active > *:nth-child(2){animation-delay:.05s}
+.section.active > *:nth-child(3){animation-delay:.1s}
+.section.active > *:nth-child(4){animation-delay:.15s}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-eyebrow">Squad 2 · Backend</div>
+    <div class="logo-title">Visual<br><span>Law</span> & IA</div>
+    <div class="logo-sub">Sistema Jurídico Brasileiro</div>
+    <div class="status-pill">
+      <div class="status-dot" id="sdot"></div>
+      <span id="stxt">verificando...</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">
+      <div class="nav-label">Visão Geral</div>
+      <div class="nav-item active" onclick="go('home',this)">
+        <div class="nav-icon">⚖️</div> O Projeto
+      </div>
+      <div class="nav-item" onclick="go('anonimizacao',this)">
+        <div class="nav-icon">🔒</div> Anonimização
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Teste ao Vivo</div>
+      <div class="nav-item" onclick="go('conta',this)">
+        <div class="nav-icon">👤</div> Criar Conta
+      </div>
+      <div class="nav-item" onclick="go('entrar',this)">
+        <div class="nav-icon">🔑</div> Entrar
+      </div>
+      <div class="nav-item" onclick="go('documento',this)">
+        <div class="nav-icon">📄</div> Enviar Documento
+      </div>
+      <div class="nav-item" onclick="go('alertas',this)">
+        <div class="nav-icon">🔔</div> Alertas de Prazo
+      </div>
+      <div class="nav-item" onclick="go('privacidade',this)">
+        <div class="nav-icon">🛡️</div> Privacidade (LGPD)
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Auditoria</div>
+      <div class="nav-item" onclick="go('logs',this)">
+        <div class="nav-icon">📋</div> Registros do Sistema
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    Visual Law · Squad 2 · 2026<br>
+    Flask · SQLite · MongoDB · AES-128
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- ═══ HOME ═══ -->
+  <div id="home" class="section active">
+    <div class="page-header">
+      <div>
+        <div class="page-title">O que foi construído</div>
+        <div class="page-sub">Infraestrutura backend, segurança e conformidade LGPD</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="hero">
+        <div class="hero-eyebrow">Squad 2 · Backend e Segurança</div>
+        <div class="hero-title">Proteção de dados<br>por design — não por decreto.</div>
+        <div class="hero-desc">Cinco módulos Python que garantem que nenhum dado pessoal chegue à IA, que arquivos sejam criptografados antes de tocar o disco, e que cada ação seja rastreada sem expor o usuário.</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-num">5</div><div class="stat-label">Módulos Python</div></div>
+        <div class="stat"><div class="stat-num">12</div><div class="stat-label">Endpoints REST</div></div>
+        <div class="stat"><div class="stat-num">6</div><div class="stat-label">Dados protegidos</div></div>
+        <div class="stat"><div class="stat-num">100%</div><div class="stat-label">LGPD conforme</div></div>
+      </div>
+      <div class="welcome-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-title">Anonimização Automática (RCP-001)</div>
+          <div class="feature-desc">CPF, CNPJ, RG, e-mail, telefone e nomes próprios substituídos automaticamente antes de qualquer envio à IA — o modelo nunca vê dados reais.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <div class="feature-title">Criptografia AES-128 (RNF-010)</div>
+          <div class="feature-desc">Todos os arquivos PDF são criptografados com Fernet antes de tocar o disco. Chave carregada de variável de ambiente, nunca no código.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <div class="feature-title">Logs de Auditoria (RNF-012)</div>
+          <div class="feature-desc">Cada ação registrada com timestamp UTC. IP armazenado como hash SHA-256 — rastreável tecnicamente, irreversível pessoalmente.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <div class="feature-title">Opt-Out de IA (RCP-002)</div>
+          <div class="feature-desc">Usuário controla se seus dados podem treinar modelos de IA. Proteção máxima por padrão — opt_out = true se usuário não encontrado.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANONIMIZAÇÃO ═══ -->
+  <div id="anonimizacao" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Anonimização de Dados</div>
+        <div class="page-sub">Como o dado pessoal é removido antes de chegar à IA</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="alert alert-info">
+        <span>ℹ️</span>
+        <span>O módulo <strong>anonimizador.py</strong> processa o texto antes de qualquer armazenamento ou envio. A proteção é estrutural — acontece automaticamente, sem ação do usuário.</span>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Exemplo ao vivo — antes e depois</span></div>
+        <div class="card-body">
+          <div class="anon-demo">
+            <div class="anon-before">
+              <div class="anon-label">Texto original</div>
+              Contrato entre <span class="highlight-red">João da Silva</span>,<br>
+              CPF <span class="highlight-red">123.456.789-00</span>,<br>
+              e-mail <span class="highlight-red">joao@email.com</span>,<br>
+              telefone <span class="highlight-red">(11) 98765-4321</span>,<br>
+              CNPJ <span class="highlight-red">12.345.678/0001-90</span>.
+            </div>
+            <div class="arrow-mid">→</div>
+            <div class="anon-after">
+              <div class="anon-label">Texto anonimizado</div>
+              Contrato entre <span class="highlight-teal">Parte A</span>,<br>
+              CPF <span class="highlight-teal">[DADO PROTEGIDO - CPF]</span>,<br>
+              e-mail <span class="highlight-teal">[DADO PROTEGIDO - EMAIL]</span>,<br>
+              telefone <span class="highlight-teal">[DADO PROTEGIDO - TEL]</span>,<br>
+              CNPJ <span class="highlight-teal">[DADO PROTEGIDO - CNPJ]</span>.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">6 categorias de dados protegidos</span></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.3rem">CPF</div>
+              <div style="font-size:13px;color:var(--paper)">000.000.000-00 ou 00000000000</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.3rem">CNPJ</div>
+              <div style="font-size:13px;color:var(--paper)">00.000.000/0000-00</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.3rem">E-mail</div>
+              <div style="font-size:13px;color:var(--paper)">usuario@dominio.ext</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.3rem">Telefone</div>
+              <div style="font-size:13px;color:var(--paper)">(00) 00000-0000</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:.3rem">RG</div>
+              <div style="font-size:13px;color:var(--paper)">Formatos variados com dígito</div>
+            </div>
+            <div style="background:rgba(26,122,110,.08);border-radius:8px;padding:.85rem 1rem;border:1px solid rgba(26,122,110,.25)">
+              <div style="font-size:10px;color:var(--teal);font-family:'DM Mono',monospace;margin-bottom:.3rem">Nomes próprios</div>
+              <div style="font-size:13px;color:var(--paper)">João da Silva → <span style="color:var(--teal)">Parte A</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CRIAR CONTA ═══ -->
+  <div id="conta" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Criar Conta</div>
+        <div class="page-sub">Cadastro de novo usuário no sistema</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="alert alert-info">
+        <span>🔒</span>
+        <span>A senha nunca é armazenada em texto puro — passa por <strong>SHA-256 com salt</strong> antes de qualquer gravação no banco de dados.</span>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Dados do novo usuário</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:1rem">
+          <div class="form-row">
+            <div class="field"><label>Nome completo</label><input id="c-nome" value="Ana Silva" /></div>
+            <div class="field"><label>E-mail</label><input id="c-email" value="ana@visuallaw.com" /></div>
+          </div>
+          <div class="field"><label>Senha</label><input id="c-senha" type="password" value="Senha1234!" /></div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="cadastrar()">Criar conta →</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="card-resp-conta" style="display:none">
+        <div class="card-header"><span class="card-title">Resposta do servidor</span></div>
+        <div class="card-body"><div id="resp-conta" class="response-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ENTRAR ═══ -->
+  <div id="entrar" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Entrar</div>
+        <div class="page-sub">Autenticação e geração de token de sessão</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="alert alert-info">
+        <span>🔑</span>
+        <span>O sistema gera um token com <strong>288 bits de entropia</strong> que expira automaticamente em 8 horas. Após o login, todos os próximos testes já estarão autenticados.</span>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Credenciais</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:1rem">
+          <div class="form-row">
+            <div class="field"><label>E-mail</label><input id="l-email" value="ana@visuallaw.com" /></div>
+            <div class="field"><label>Senha</label><input id="l-senha" type="password" value="Senha1234!" /></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="login()">Entrar →</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Token de sessão ativo</span></div>
+        <div class="card-body">
+          <div class="token-display" id="token-box" onclick="copyToken()" title="Clique para copiar">
+            <span id="token-text" class="token-empty">Faça login para obter o token</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:.6rem">O token é enviado automaticamente em todos os próximos requests. Clique para copiar.</div>
+        </div>
+      </div>
+      <div id="card-resp-login" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">Resposta do servidor</span></div>
+        <div class="card-body"><div id="resp-login" class="response-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DOCUMENTO ═══ -->
+  <div id="documento" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Enviar Documento</div>
+        <div class="page-sub">Upload de PDF com pipeline completo de segurança</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="pipeline" id="pipeline">
+        <div class="pipe-step" id="ps1"><div class="step-icon">📤</div><div class="step-name">Upload</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" id="ps2"><div class="step-icon">✅</div><div class="step-name">Validação</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" id="ps3"><div class="step-icon">📖</div><div class="step-name">Extração</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" id="ps4"><div class="step-icon">🔒</div><div class="step-name">Anonimização</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" id="ps5"><div class="step-icon">🔐</div><div class="step-name">Criptografia</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-step" id="ps6"><div class="step-icon">📋</div><div class="step-name">Log</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Selecionar arquivo</span></div>
+        <div class="card-body">
+          <div class="upload-zone" id="uz" onclick="document.getElementById('file-in').click()" ondragover="e=>e.preventDefault()" ondrop="dropFile(event)">
+            <input type="file" id="file-in" accept=".pdf,.docx" onchange="fileChosen(this)">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">Arraste um PDF aqui ou clique para selecionar</div>
+            <div class="upload-sub">PDF ou DOCX · máximo 10 MB · limite 50/dia</div>
+            <div class="upload-file" id="fname"></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+            <button class="btn btn-primary" onclick="upload()" id="btn-upload">Processar documento →</button>
+          </div>
+        </div>
+      </div>
+      <div id="card-resp-doc" class="card" style="display:none">
+        <div class="card-header">
+          <span class="card-title">Resultado da anonimização</span>
+          <span id="anon-summary" style="font-size:12px;color:var(--teal);font-family:'DM Mono',monospace"></span>
+        </div>
+        <div class="card-body"><div id="resp-doc" class="response-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALERTAS ═══ -->
+  <div id="alertas" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Alertas de Prazo</div>
+        <div class="page-sub">Requisito RF-012 — notificações por prioridade</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Novo alerta</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:1rem">
+          <div class="field"><label>Título do alerta</label><input id="al-titulo" value="Vencimento do contrato de locação" /></div>
+          <div class="form-row">
+            <div class="field"><label>Data de vencimento</label><input id="al-data" type="date" value="2026-12-31" /></div>
+            <div class="field">
+              <label>Prioridade</label>
+              <select id="al-prio">
+                <option value="alta">🔴 Alta</option>
+                <option value="media">🟡 Média</option>
+                <option value="baixa">🟢 Baixa</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:.75rem;justify-content:flex-end">
+            <button class="btn btn-ghost" onclick="listarAlertas()">Ver alertas</button>
+            <button class="btn btn-primary" onclick="criarAlerta()">Criar alerta →</button>
+          </div>
+        </div>
+      </div>
+      <div id="card-resp-al" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">Resposta</span></div>
+        <div class="card-body"><div id="resp-al" class="response-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PRIVACIDADE ═══ -->
+  <div id="privacidade" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Privacidade e LGPD</div>
+        <div class="page-sub">Controle de dados e conformidade com a Lei 13.709/2018</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="alert alert-warn">
+        <span>⚖️</span>
+        <span>Base legal: <strong>Legítimo Interesse (Art. 7º, IX)</strong> — finalidade documentada: democratização da informação jurídica. Coleta mínima e opt-out garantidos.</span>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Controle de uso dos dados</span></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:.75rem">
+          <div class="toggle-wrap">
+            <div class="toggle-info">
+              <div class="toggle-title">Opt-Out de treinamento de IA</div>
+              <div class="toggle-desc">Proibir que meus documentos sejam usados para treinar modelos de Inteligência Artificial</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-opt" onchange="setOptOut(this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <button class="btn btn-ghost" onclick="getOptOut()" style="align-self:flex-start">Consultar status atual</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Direitos garantidos (LGPD Art. 18)</span></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div style="padding:.85rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:12px;font-weight:600;color:var(--paper);margin-bottom:.3rem">Anonimização</div>
+              <div style="font-size:12px;color:var(--muted)">Dados removidos antes de qualquer processamento externo</div>
+            </div>
+            <div style="padding:.85rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:12px;font-weight:600;color:var(--paper);margin-bottom:.3rem">Opt-Out</div>
+              <div style="font-size:12px;color:var(--muted)">Proibir uso dos dados para treinamento de IA a qualquer momento</div>
+            </div>
+            <div style="padding:.85rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:12px;font-weight:600;color:var(--paper);margin-bottom:.3rem">Exclusão Forense</div>
+              <div style="font-size:12px;color:var(--muted)">Arquivos sobrescritos com zeros antes de deletar — sem resíduo em disco</div>
+            </div>
+            <div style="padding:.85rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.07)">
+              <div style="font-size:12px;font-weight:600;color:var(--paper);margin-bottom:.3rem">Logs auditáveis</div>
+              <div style="font-size:12px;color:var(--muted)">Toda ação registrada — IP como hash, zero dado pessoal exposto</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="card-resp-priv" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">Resposta</span></div>
+        <div class="card-body"><div id="resp-priv" class="response-box"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LOGS ═══ -->
+  <div id="logs" class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Registros do Sistema</div>
+        <div class="page-sub">Logs de auditoria — RNF-012/013 — IP mascarado por hash SHA-256</div>
+      </div>
+      <button class="btn btn-primary" onclick="carregarLogs()">Carregar registros</button>
+    </div>
+    <div class="content">
+      <div class="alert alert-info">
+        <span>🔍</span>
+        <span>Cada ação é registrada com timestamp UTC. O IP nunca é armazenado — apenas seu hash SHA-256 truncado em 16 caracteres. <strong>Nenhum dado pessoal aparece nos logs.</strong></span>
+      </div>
+      <div class="card" id="card-logs">
+        <div class="card-header">
+          <span class="card-title">Histórico de ações</span>
+          <span id="log-total" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace"></span>
+        </div>
+        <div class="card-body">
+          <div id="logs-content" style="color:var(--muted);font-size:13px;text-align:center;padding:2rem">
+            Clique em "Carregar registros" para ver o histórico
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const BASE = 'http://localhost:5000';
+let TOKEN = '';
+
+// ── Status ──────────────────────────────────────────
+async function checkStatus() {
+  try {
+    const r = await fetch(BASE+'/health', {signal:AbortSignal.timeout(2000)});
+    if(r.ok){
+      document.getElementById('sdot').className='status-dot on';
+      document.getElementById('stxt').textContent='online';
+    } else throw 0;
+  } catch {
+    document.getElementById('sdot').className='status-dot';
+    document.getElementById('stxt').textContent='offline';
+  }
+}
+checkStatus(); setInterval(checkStatus, 5000);
+
+// ── Navigation ───────────────────────────────────────
+function go(id, el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── JSON highlight ───────────────────────────────────
+function hl(json) {
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m => {
+    if(/^"/.test(m)) return /:$/.test(m)?`<span class="json-key">${m}</span>`:`<span class="json-str">${m}</span>`;
+    if(/true|false/.test(m)) return `<span class="json-bool">${m}</span>`;
+    if(/null/.test(m)) return `<span class="json-null">${m}</span>`;
+    return `<span class="json-num">${m}</span>`;
+  });
+}
+
+function showResp(elId, statusCode, data, cardId) {
+  const card = document.getElementById(cardId);
+  if(card) card.style.display='';
+  const el = document.getElementById(elId);
+  const cls = statusCode < 400 ? 's-ok' : 's-err';
+  el.innerHTML = `<div class="resp-status ${cls}">${statusCode}</div>\n${hl(JSON.stringify(data,null,2))}`;
+}
+
+// ── Cadastro ─────────────────────────────────────────
+async function cadastrar() {
+  try {
+    const r = await fetch(BASE+'/auth/cadastro', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome:v('c-nome'),email:v('c-email'),senha:v('c-senha')})
+    });
+    showResp('resp-conta', r.status, await r.json(), 'card-resp-conta');
+  } catch { showErr('resp-conta','card-resp-conta'); }
+}
+
+// ── Login ─────────────────────────────────────────────
+async function login() {
+  try {
+    const r = await fetch(BASE+'/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email:v('l-email'),senha:v('l-senha')})
+    });
+    const d = await r.json();
+    showResp('resp-login', r.status, d, 'card-resp-login');
+    if(d.token) {
+      TOKEN = d.token;
+      document.getElementById('token-text').textContent = TOKEN.substring(0,40)+'...';
+      document.getElementById('token-text').classList.remove('token-empty');
+    }
+  } catch { showErr('resp-login','card-resp-login'); }
+}
+
+function copyToken() {
+  if(TOKEN) navigator.clipboard.writeText(TOKEN);
+}
+
+// ── Upload ───────────────────────────────────────────
+function fileChosen(input) {
+  const f = input.files[0];
+  if(f) document.getElementById('fname').textContent = f.name + ' — ' + (f.size/1024).toFixed(1)+' KB';
+}
+function dropFile(e) {
+  e.preventDefault();
+  document.getElementById('uz').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f) { document.getElementById('file-in').files=e.dataTransfer.files; fileChosen({files:[f]}); }
+}
+
+function animPipeline() {
+  const steps=['ps1','ps2','ps3','ps4','ps5','ps6'];
+  steps.forEach((id,i)=>{
+    setTimeout(()=>{
+      document.getElementById(id).classList.add('active');
+    }, i*400);
+    setTimeout(()=>{
+      document.getElementById(id).classList.remove('active');
+      document.getElementById(id).classList.add('done');
+    }, i*400+380);
+  });
+}
+
+async function upload() {
+  const file = document.getElementById('file-in').files[0];
+  if(!file) { alert('Selecione um PDF primeiro'); return; }
+  const btn = document.getElementById('btn-upload');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Processando...';
+  animPipeline();
+  try {
+    const fd = new FormData(); fd.append('arquivo', file);
+    const r = await fetch(BASE+'/documentos/upload', {
+      method:'POST', headers:{Authorization:'Bearer '+TOKEN}, body:fd
+    });
+    const d = await r.json();
+    showResp('resp-doc', r.status, d, 'card-resp-doc');
+    if(d.relatorio_anonimizacao) {
+      const rel = d.relatorio_anonimizacao;
+      const total = Object.values(rel).reduce((a,b)=>a+b,0);
+      document.getElementById('anon-summary').textContent = total+' substituições';
+    }
+  } catch { showErr('resp-doc','card-resp-doc'); }
+  finally { btn.disabled=false; btn.textContent='Processar documento →'; }
+}
+
+// ── Alertas ──────────────────────────────────────────
+async function criarAlerta() {
+  try {
+    const r = await fetch(BASE+'/alertas/', {
+      method:'POST', headers:{Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},
+      body: JSON.stringify({titulo:v('al-titulo'),data_vencimento:v('al-data'),prioridade:v('al-prio'),descricao:''})
+    });
+    showResp('resp-al', r.status, await r.json(), 'card-resp-al');
+  } catch { showErr('resp-al','card-resp-al'); }
+}
+async function listarAlertas() {
+  try {
+    const r = await fetch(BASE+'/alertas/', {headers:{Authorization:'Bearer '+TOKEN}});
+    showResp('resp-al', r.status, await r.json(), 'card-resp-al');
+  } catch { showErr('resp-al','card-resp-al'); }
+}
+
+// ── Privacidade ──────────────────────────────────────
+async function setOptOut(val) {
+  try {
+    const r = await fetch(BASE+'/usuarios/opt-out', {
+      method:'PUT', headers:{Authorization:'Bearer '+TOKEN,'Content-Type':'application/json'},
+      body: JSON.stringify({opt_out:val})
+    });
+    showResp('resp-priv', r.status, await r.json(), 'card-resp-priv');
+  } catch { showErr('resp-priv','card-resp-priv'); }
+}
+async function getOptOut() {
+  try {
+    const r = await fetch(BASE+'/usuarios/opt-out', {headers:{Authorization:'Bearer '+TOKEN}});
+    const d = await r.json();
+    showResp('resp-priv', r.status, d, 'card-resp-priv');
+    if(d.opt_out_ia !== undefined)
+      document.getElementById('toggle-opt').checked = d.opt_out_ia;
+  } catch { showErr('resp-priv','card-resp-priv'); }
+}
+
+// ── Logs ─────────────────────────────────────────────
+async function carregarLogs() {
+  try {
+    const r = await fetch(BASE+'/logs/auditoria', {headers:{Authorization:'Bearer '+TOKEN}});
+    const d = await r.json();
+    document.getElementById('log-total').textContent = (d.total||0)+' registros';
+    const tbody = d.logs?.map(l => {
+      const badgeCls = l.resultado==='SUCESSO'?'b-ok':'b-err';
+      return `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${l.data_hora?.substring(0,19).replace('T',' ')}</td>
+        <td style="font-weight:500;color:var(--paper)">${l.acao}</td>
+        <td><span class="badge b-inf">${l.modulo}</span></td>
+        <td><span class="badge ${badgeCls}">${l.resultado}</span></td>
+        <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${l.ip_hash}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:1rem">Nenhum registro</td></tr>';
+    document.getElementById('logs-content').innerHTML = `
+      <table class="log-table">
+        <thead><tr>
+          <th>Timestamp</th><th>Ação</th><th>Módulo</th><th>Resultado</th><th>IP (hash)</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>`;
+  } catch { document.getElementById('logs-content').innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem">Faça login primeiro</div>'; }
+}
+
+// ── Helpers ───────────────────────────────────────────
+function v(id){ return document.getElementById(id)?.value||'' }
+function showErr(elId, cardId) {
+  document.getElementById(cardId).style.display='';
+  document.getElementById(elId).innerHTML='<span style="color:#E07070">Erro de conexão. Verifique se a API está rodando em localhost:5000</span>';
+}
+</script>
+</body>
+</html>
